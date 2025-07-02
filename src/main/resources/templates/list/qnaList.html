@@ -183,5 +183,22 @@
             </ul>
         </nav>
     </div>
+    <script th:inline="javascript">
+        $(function () {
+            const $start = $('#startDate');
+            const $end = $('#endDate');
+
+            if (!$start.val()) {
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                $start.val(formatDate(oneYearAgo));
+            }
+
+            if (!$end.val()) {
+                const today = new Date();
+                $end.val(formatDate(today));
+            }
+        });
+    </script>
 </main>
 </html>
