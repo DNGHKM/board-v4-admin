@@ -1,0 +1,102 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.boardv4admin.repository.QnaRepository">
+    <select id="findById" parameterType="Long" resultType="Qna">
+        SELECT *
+        FROM qna
+        WHERE id = #{qnaId}
+    </select>
+
+<!--        private Long answererId;
+    private String answer;
+    private LocalDateTime answerAt;-->
+    <update id="updateAnswer" parameterType="Qna">
+        UPDATE qna
+        SET answerer_id  = #{answererId},
+            answer = #{answer},
+            answer_at = #{answerAt}
+        WHERE id = #{id}
+    </update>
+
+    <select id="countBySearch" resultType="Integer">
+        SELECT COUNT(*)
+        FROM qna q
+        JOIN member m
+        ON q.writer_id = m.id
+
+        <if test="startDate != null">
+            AND Date(q.question_at) &gt;= #{startDate}
+        </if>
+
+        <if test="endDate != null">
+            AND Date(q.question_at) &lt;= #{endDate}
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+            q.subject LIKE CONCAT('%', #{keyword}, '%')
+            OR q.content LIKE CONCAT('%', #{keyword}, '%')
+            OR m.name LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+
+        <if test="unansweredOnly == true">
+            AND q.answer is null
+        </if>
+    </select>
+
+    <select id="findBySearch" resultType="com.boardv4admin.dto.qna.QnaSummaryResponse">
+        SELECT
+        q.id,
+        q.subject,
+        m.name AS writerName,
+        q.answer is not null AS hasAnswer,
+        q.secret,
+        q.view_count AS viewCount,
+        q.question_at AS questionAt
+
+        FROM qna q
+        JOIN member m ON q.writer_id = m.id
+
+        <if test="dto.startDate != null">
+            AND DATE(q.question_at) &gt;= #{dto.startDate}
+        </if>
+
+        <if test="dto.endDate != null">
+            AND DATE(q.question_at) &lt;= #{dto.endDate}
+        </if>
+
+        <if test="dto.keyword != null and dto.keyword != ''">
+            AND (
+            q.subject LIKE CONCAT('%', #{dto.keyword}, '%')
+            OR q.content LIKE CONCAT('%', #{dto.keyword}, '%')
+            OR m.name LIKE CONCAT('%', #{dto.keyword}, '%')
+            )
+        </if>
+
+        <if test="dto.unansweredOnly == true">
+            AND q.answer is null
+        </if>
+
+        ORDER BY
+        <choose>
+            <when test="dto.sortBy.name() == 'CREATE_DATE'">q.question_at</when>
+            <when test="dto.sortBy.name() == 'SUBJECT'">q.subject</when>
+            <when test="dto.sortBy.name() == 'VIEW_COUNT'">q.view_count</when>
+            <otherwise>q.question_at</otherwise>
+        </choose>
+        <choose>
+            <when test="dto.sortDirection.name() == 'ASC'">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>
+        , q.id DESC
+
+        LIMIT #{dto.size} OFFSET #{offset}
+    </select>
+
+    <delete id="delete">
+        DELETE
+        FROM qna
+        WHERE id = #{qnaId}
+    </delete>
+</mapper>

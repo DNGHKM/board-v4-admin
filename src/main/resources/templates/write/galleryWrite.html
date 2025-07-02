@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 작성</title>
+</head>
+<th:block layout:fragment="pageScripts">
+    <script src="/js/queryUtils.js"></script>
+</th:block>
+<main layout:fragment="content">
+    <div class="container mt-5">
+        <h2 class="mb-4" th:text="${board.korName} + ' 등록'">게시판 - 등록</h2>
+        <form id="writeForm"
+              th:action="@{/board/posts}"
+              method="post"
+              enctype="multipart/form-data"
+              onsubmit="return validateForm()">
+            <input type="text" hidden="hidden" name="boardId" th:value="${board.id}"/>
+            <input type="hidden" name="queryString"/>
+            <table class="table table-bordered table-sm align-middle">
+                <tbody>
+                <!-- 카테고리 -->
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold w-20">카테고리 <span class="text-danger">*</span></th>
+                    <td>
+                        <select name="categoryId" id="categoryId" class="form-select w-100">
+                            <option value="">카테고리 선택</option>
+                            <option th:each="category : ${categories}" th:value="${category.id}"
+                                    th:text="${category.name}"></option>
+                        </select>
+                    </td>
+                </tr>
+
+                <!-- 제목 -->
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">제목 <span class="text-danger">*</span></th>
+                    <td>
+                        <input type="text" name="subject" id="subject" class="form-control w-100">
+                    </td>
+                </tr>
+
+                <!-- 내용 -->
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">내용 <span class="text-danger">*</span></th>
+                    <td>
+                        <textarea name="content" id="content" rows="8" class="form-control w-100"></textarea>
+                    </td>
+                </tr>
+
+                <!-- 파일 -->
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">파일 첨부</th>
+                    <td>
+                        <span>jpg, gif, png 파일만 각각 1MB까지 업로드 가능(20개)</span>
+                        <div id="fileInputWrapper">
+                            <!-- 첫 줄 기본 input -->
+                            <div class="d-flex align-items-center mb-2 file-input-row">
+                                <input type="file" name="files" class="form-control me-2"
+                                       accept=".jpg, .png, .gif">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="removeFileInput(this)">X
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="addFileInput()">추가</button>
+                    </td>
+                </tr>
+
+                </tbody>
+            </table>
+
+            <!-- 버튼 -->
+            <div class="d-flex justify-content-end mt-3">
+                <button type="button" class="btn btn-secondary me-2" id="cancelBtn"
+                        th:attr="data-board-id=${board.id}"
+                        onclick="window.location.href = withQueryString(`/board/${this.dataset.boardId}/list`);">취소
+                </button>
+                <button type="submit" class="btn btn-primary">저장</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+        const MAX_FILE_COUNT = 20;
+
+        function validateForm() {
+            const subject = $("#subject").val().trim();
+            const content = $("#content").val().trim();
+            const category = $("#categoryId").val();
+
+            if (!category) {
+                alert("카테고리를 선택하세요.");
+                return false;
+            }
+            if (!subject) {
+                alert("제목을 입력하세요.");
+                return false;
+            }
+            if (subject.length < 4 || subject.length >= 100) {
+                alert("제목은 4자 이상 100자 미만이어야 합니다.");
+                return false;
+            }
+            if (!content) {
+                alert("내용을 입력하세요.");
+                return false;
+            }
+            if (content.length < 4 || content.length >= 2000) {
+                alert("내용은 4자 이상 2000자 미만이어야 합니다.");
+                return false;
+            }
+        }
+
+        function addFileInput() {
+            const wrapper = $('#fileInputWrapper');
+            const count = wrapper.find('.file-input-row').length;
+
+            if (count >= MAX_FILE_COUNT) {
+                alert(`최대 ${MAX_FILE_COUNT}개까지 첨부할 수 있습니다.`);
+                return;
+            }
+
+            const inputRow = $(`
+                <div class="d-flex align-items-center mb-2 file-input-row">
+                    <input type="file" name="files" class="form-control me-2" onchange="validateFile(this)">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeFileInput(this)">X</button>
+                </div>
+            `);
+
+            wrapper.append(inputRow);
+        }
+
+        function validateFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`"${file.name}" 파일은 2MB를 초과할 수 없습니다.`);
+                input.value = '';
+            }
+        }
+
+        function removeFileInput(btn) {
+            $(btn).closest('.file-input-row').remove();
+        }
+
+    </script>
+</main>
+</html>

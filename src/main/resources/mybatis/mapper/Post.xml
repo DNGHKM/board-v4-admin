@@ -1,0 +1,190 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.boardv4admin.repository.PostRepository">
+    <select id="findById" parameterType="Long" resultType="Post">
+        SELECT *
+        FROM post
+        WHERE id = #{postId}
+    </select>
+
+    <insert id="insert" parameterType="Post" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO post(member_id, board_id, category_id, subject, content, view_count, create_at, deleted, pinned)
+        VALUES (#{memberId}, #{boardId}, #{categoryId}, #{subject},
+                #{content}, #{viewCount}, #{createAt}, #{deleted}, #{pinned})
+    </insert>
+
+    <update id="update" parameterType="Post">
+        UPDATE post
+        SET category_id = #{categoryId},
+            subject     = #{subject},
+            content     = #{content},
+            pinned      = #{pinned}
+        WHERE id = #{id}
+    </update>
+
+    <select id="countBySearch" resultType="Integer">
+        SELECT COUNT(*)
+        FROM post p
+            JOIN category c ON p.category_id = c.id
+        WHERE p.board_id = #{boardId}
+
+        <if test="categoryId != null and categoryId != ''">
+            AND c.id = #{categoryId}
+        </if>
+
+        <if test="startDate != null">
+            AND Date(p.create_at) &gt;= #{startDate}
+        </if>
+
+        <if test="endDate != null">
+            AND Date(p.create_at) &lt;= #{endDate}
+        </if>
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+            p.subject LIKE CONCAT('%', #{keyword}, '%')
+            OR p.content LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+    </select>
+
+    <select id="findBySearch" resultType="com.boardv4admin.dto.post.PostSummaryResponse">
+        SELECT
+        p.id,
+        c.name AS categoryName,
+        p.subject,
+        m.name AS writerName,
+        p.pinned AS pinned,
+
+        -- 썸네일 파일명 (예: 대표 첨부파일 1개만)
+        (
+        SELECT pf.saved_filename
+        FROM post_file pf
+        WHERE pf.post_id = p.id
+        ORDER BY pf.id ASC
+        LIMIT 1
+        ) AS thumbnailFilename,
+
+        -- 댓글 수
+        (
+        SELECT COUNT(*)
+        FROM comment
+        WHERE post_id = p.id
+        ) AS commentCount,
+
+        -- 첨부파일 수
+        (
+        SELECT COUNT(*)
+        FROM post_file pf
+        WHERE pf.post_id = p.id
+        ) AS fileCount,
+
+        p.view_count AS viewCount,
+        p.create_at AS createAt
+
+        FROM post p
+        JOIN category c ON p.category_id = c.id
+        JOIN member m ON p.member_id = m.id
+        WHERE p.board_id = #{dto.boardId}
+
+        <if test="dto.categoryId != null">
+            AND p.category_id = #{dto.categoryId}
+        </if>
+
+        <if test="dto.startDate != null">
+            AND DATE(p.create_at) &gt;= #{dto.startDate}
+        </if>
+
+        <if test="dto.endDate != null">
+            AND DATE(p.create_at) &lt;= #{dto.endDate}
+        </if>
+
+        <if test="dto.keyword != null and dto.keyword != ''">
+            AND (
+            p.subject LIKE CONCAT('%', #{dto.keyword}, '%')
+            OR p.content LIKE CONCAT('%', #{dto.keyword}, '%')
+            )
+        </if>
+
+        ORDER BY
+        <choose>
+            <when test="dto.sortBy.name() == 'CREATE_DATE'">p.create_at</when>
+            <when test="dto.sortBy.name() == 'CATEGORY'">c.name</when>
+            <when test="dto.sortBy.name() == 'SUBJECT'">p.subject</when>
+            <when test="dto.sortBy.name() == 'VIEW_COUNT'">p.view_count</when>
+            <otherwise>p.create_at</otherwise>
+        </choose>
+        <choose>
+            <when test="dto.sortDirection.name() == 'ASC'">ASC</when>
+            <otherwise>DESC</otherwise>
+        </choose>
+        , p.id DESC
+
+        LIMIT #{dto.size} OFFSET #{offset}
+    </select>
+    <select id="findPinnedTop5" resultType="com.boardv4admin.dto.post.PostSummaryResponse">
+        SELECT
+        p.id,
+        c.name AS categoryName,
+        p.subject,
+        m.name AS writerName,
+        p.pinned as pinned,
+
+        -- 썸네일 파일명 (예: 대표 첨부파일 1개만)
+        (
+        SELECT pf.saved_filename
+        FROM post_file pf
+        WHERE pf.post_id = p.id
+        ORDER BY pf.id ASC
+        LIMIT 1
+        ) AS thumbnailFilename,
+
+        -- 댓글 수
+        (
+        SELECT COUNT(*)
+        FROM comment
+        WHERE post_id = p.id
+        ) AS commentCount,
+
+        -- 첨부파일 수
+        (
+        SELECT COUNT(*)
+        FROM post_file pf
+        WHERE pf.post_id = p.id
+        ) AS fileCount,
+
+        p.view_count AS viewCount,
+        p.create_at AS createAt
+
+        FROM post p
+        JOIN category c ON p.category_id = c.id
+        JOIN member m ON p.member_id = m.id
+        WHERE p.board_id = #{boardId}
+            AND p.pinned = true
+
+        ORDER BY p.id DESC
+        LIMIT 5
+    </select>
+
+
+    <update id="softDelete">
+        UPDATE post
+        SET subject   = #{deletedSubject},
+            content   = #{deletedContent},
+            deleted   = true
+        WHERE id = #{postId}
+    </update>
+
+    <delete id="hardDelete">
+        DELETE
+        FROM post
+        WHERE id = #{postId}
+    </delete>
+
+    <update id="increaseViewCount" parameterType="Long">
+        UPDATE post
+        SET view_count = view_count + 1
+        WHERE id = #{postId}
+    </update>
+
+</mapper>

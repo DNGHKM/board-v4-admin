@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+
+<th:block layout:fragment="pageScripts">
+    <script src="/js/queryUtils.js"></script>
+</th:block>
+
+<main layout:fragment="content">
+    <div class="container mt-5">
+        <h2 class="mb-4" th:text="${board.korName} + ' 수정'">게시판 - 수정</h2>
+
+        <form id="modifyForm"
+              th:action="@{/board/modify}"
+              method="post"
+              enctype="multipart/form-data"
+              onsubmit="return validateForm()">
+            <input type="hidden" name="boardId" th:value="${board.id}"/>
+            <input type="hidden" name="postId" th:value="${post.id}"/>
+            <input type="hidden" name="queryString"/>
+            <table class="table table-bordered table-sm align-middle">
+                <tbody>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold w-20">작성자</th>
+                    <td th:text="${post.writer}"></td>
+                </tr>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">등록일시</th>
+                    <td th:text="${#temporals.format(post.createAt, 'yyyy-MM-dd HH:mm')}"></td>
+                </tr>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold w-20">카테고리 <span class="text-danger">*</span></th>
+                    <td>
+                        <select name="categoryId" id="categoryId" class="form-select w-100">
+                            <option value="">카테고리 선택</option>
+                            <option th:each="category : ${categories}"
+                                    th:value="${category.id}"
+                                    th:text="${category.name}"
+                                    th:selected="${category.id == post.categoryId}">
+                            </option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">제목 <span class="text-danger">*</span></th>
+                    <td>
+                        <input type="text" name="subject" id="subject" class="form-control w-100"
+                               th:value="${post.subject}"/>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">내용 <span class="text-danger">*</span></th>
+                    <td>
+                        <textarea name="content" id="content" rows="10" class="form-control w-100"
+                                  th:text="${post.content}"></textarea>
+                    </td>
+                </tr>
+                <tr th:if="${post.files != null and !post.files.isEmpty()}">
+                    <th class="ps-3 bg-light fw-semibold">기존 파일</th>
+                    <td>
+                        <div th:each="file : ${post.files}" class="mb-2 file-preserve-row"> <!-- ← 여기 추가 -->
+                            <input type="hidden" name="preserveFilenames" th:value="${file.savedFilename}"/>
+                            <img th:src="@{/api/v1/files/{filename}(filename=${file.savedFilename})}" width="50px" class="me-2">
+                            <a th:href="@{/api/v1/files/{filename}(filename=${file.savedFilename})}"
+                               th:text="${file.originalFilename}" target="_blank"
+                               class="me-2 text-truncate d-inline-block" style="max-width: 400px;"></a>
+                            <button type="button" class="btn btn-sm btn-danger"
+                                    onclick="this.closest('div').remove(); updateAddButtonVisibility();">X
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">파일 첨부</th>
+                    <td>
+                        <span class="d-block mb-2">jpg, gif, png 파일만 각각 1MB까지 업로드 가능(20개)</span>
+                        <div id="fileInputWrapper"></div>
+                        <button type="button" class="btn btn-sm btn-secondary" id="addFileButton"
+                                onclick="addFileInput()">추가
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </form>
+        <!-- 수정/삭제/목록 버튼 -->
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <a href="javascript:void(0);"
+               th:onclick="|location.href = withQueryString('/board/${board.id}/list')|"
+               class="btn btn-secondary">목록</a>
+
+            <button type="submit" form="modifyForm" class="btn btn-primary">수정</button>
+
+            <form th:action="@{/board/delete}" method="post"
+                  onsubmit="return confirm('정말 삭제하시겠습니까?');" class="d-inline">
+                <input type="hidden" name="boardId" th:value="${board.id}"/>
+                <input type="hidden" name="postId" th:value="${post.id}"/>
+                <input type="hidden" name="queryString"/>
+                <button type="submit" class="btn btn-danger">삭제</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const MAX_FILE_COUNT = 20;
+        const MAX_FILE_SIZE = 1 * 1024 * 1024; // 2MB
+
+        function validateForm() {
+            const subject = $("#subject").val().trim();
+            const content = $("#content").val().trim();
+            const category = $("#categoryId").val();
+
+            if (!category) return alert("카테고리를 선택하세요.");
+            if (!subject) return alert("제목을 입력하세요.");
+            if (subject.length < 4 || subject.length >= 100) return alert("제목은 4자 이상 100자 미만이어야 합니다.");
+            if (!content) return alert("내용을 입력하세요.");
+            if (content.length < 4 || content.length >= 4000) return alert("내용은 4자 이상 4000자 미만이어야 합니다.");
+
+            return confirm("수정하시겠습니까?");
+        }
+
+        function getTotalFileCount() {
+            const preserved = $(".file-preserve-row").length;
+            const added = $(".file-input-row").length;
+            return preserved + added;
+        }
+
+        function updateAddButtonVisibility() {
+            if (getTotalFileCount() >= MAX_FILE_COUNT) {
+                $("#addFileButton").hide();
+            } else {
+                $("#addFileButton").show();
+            }
+        }
+
+        function addFileInput() {
+            if (getTotalFileCount() >= MAX_FILE_COUNT) return;
+
+            const wrapper = $("#fileInputWrapper");
+            const inputRow = $(`
+            <div class="d-flex align-items-center mb-2 file-input-row">
+                <input type="file" name="files" class="form-control me-2" accept=".jpg,.png,.gif,.zip">
+                <button type="button" class="btn btn-sm btn-danger">X</button>
+            </div>
+        `);
+
+            inputRow.find("input[type='file']").on("change", function () {
+                const file = this.files[0];
+                if (file && file.size > MAX_FILE_SIZE) {
+                    alert(`"${file.name}" 파일은 2MB를 초과할 수 없습니다.`);
+                    $(this).val('');
+                }
+            });
+
+            inputRow.find("button").on("click", function () {
+                $(this).closest(".file-input-row").remove();
+                updateAddButtonVisibility();
+            });
+
+            wrapper.append(inputRow);
+            updateAddButtonVisibility();
+        }
+
+        // 초기에 버튼 상태 업데이트
+        $(document).ready(() => {
+            updateAddButtonVisibility();
+        });
+    </script>
+</main>
+</html>

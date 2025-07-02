@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<th:block layout:fragment="pageScripts">
+    <script src="/js/queryUtils.js"></script>
+</th:block>
+
+<main layout:fragment="content">
+    <div class="container mt-5">
+        <h2 class="mb-4">문의게시판 - 수정</h2>
+
+        <form id="modifyForm"
+              th:action="@{/qna/answer}"
+              method="post"
+              onsubmit="return validateForm()">
+            <input type="hidden" name="qnaId" th:value="${qna.id}"/>
+            <input type="hidden" name="queryString"/>
+
+            <table class="table table-bordered table-sm align-middle">
+                <tbody>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold w-20">작성자</th>
+                    <td th:text="${qna.writerName}"></td>
+                </tr>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">등록일시</th>
+                    <td th:text="${#temporals.format(qna.questionAt, 'yyyy-MM-dd HH:mm')}"></td>
+                </tr>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">제목</th>
+                    <td>
+                        <div th:text="${qna.subject}"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">내용</th>
+                    <td>
+                        <div th:text="${qna.content}" style="white-space: pre-line;"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="ps-3 bg-light fw-semibold">답변 <span class="text-danger">*</span></th>
+                    <td>
+                        <!-- 답변 입력 영역 -->
+                        <div class="position-relative">
+            <textarea name="answer" id="answer" rows="10" class="form-control"
+                      placeholder="답변을 입력해 주세요."
+                      th:text="${qna.answer}"></textarea>
+
+                            <!-- 버튼 우측 하단 고정 -->
+                            <div class="text-end mt-2">
+                                <button type="submit" form="modifyForm" class="btn btn-primary">
+                                    답변 등록
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 답변 작성자 표시 -->
+                        <div class="text-muted small mt-2"
+                             th:if="${qna.answer != null}"
+                             th:text="'작성자: ' + ${qna.answererName} + ' / ' + ${#temporals.format(qna.answerAt, 'yyyy-MM-dd HH:mm')}"></div>
+                    </td>
+                </tr>
+
+                </tbody>
+            </table>
+        </form>
+
+        <!-- 목록/수정/삭제 버튼 -->
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <a href="javascript:void(0);"
+               th:onclick="|location.href = withQueryString('/qna/list')|"
+               class="btn btn-secondary">목록</a>
+
+            <form th:action="@{/qna/{qnaId}/delete(qnaId=${qna.id})}" method="post"
+                  onsubmit="return confirm('정말 삭제하시겠습니까?');" class="d-inline">
+                <input type="hidden" name="qnaId" th:value="${qna.id}"/>
+                <input type="hidden" name="queryString"/>
+                <button type="submit" class="btn btn-danger">삭제</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        function validateForm() {
+            const answerBox = $("#answer");
+            const answer = answerBox ? answerBox.value.trim() : "";
+
+            if (!answer) return alert("답변을 입력하세요.");
+            if (answer.length < 4) return alert("답변은 4자 이상 입력해 주세요.");
+
+            return confirm("답변을 등록하시겠습니까?");
+        }
+    </script>
+</main>
+</html>

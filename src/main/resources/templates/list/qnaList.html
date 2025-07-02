@@ -1,0 +1,187 @@
+<html lang="ko"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 목록</title>
+</head>
+<th:block layout:fragment="pageScripts">
+    <script th:src="@{/js/queryUtils.js}"></script>
+</th:block>
+<main layout:fragment="content">
+    <div class="container mt-5">
+        <h2 class="mb-4">문의게시판 관리</h2>
+
+        <!-- 검색 영역 -->
+        <form id="searchForm" method="get"
+              th:action="@{/qna/list}"
+              class="row gx-3 align-items-center mb-4 border rounded p-3">
+
+            <!-- 등록일 -->
+            <div class="col-auto">
+                <label for="startDate" class="col-form-label">등록일:</label>
+            </div>
+            <div class="col-auto">
+                <input type="date" id="startDate" name="startDate" class="form-control"
+                       th:value="${searchCondition.startDate}"/>
+            </div>
+            <div class="col-auto">~</div>
+            <div class="col-auto">
+                <input type="date" id="endDate" name="endDate" class="form-control"
+                       th:value="${searchCondition.endDate}"/>
+            </div>
+
+            <!-- 키워드 -->
+            <div class="col-md-4">
+                <input type="text" id="keyword" name="keyword" class="form-control"
+                       placeholder="검색어를 입력해 주세요. (제목 or 내용)"
+                       th:value="${searchCondition.keyword}"/>
+            </div>
+
+            <div class="col-auto d-flex gap-2 align-items-center">
+                <button type="submit" class="btn btn-primary">검색</button>
+                <a th:href="@{/qna/list}" class="btn btn-secondary">초기화</a>
+
+                <div class="form-check ms-3">
+                    <input class="form-check-input" type="checkbox" id="unansweredOnly" name="unansweredOnly"
+                           th:checked="${searchCondition.unansweredOnly}"
+                           onchange="$('#searchForm').submit()">
+                    <label class="form-check-label" for="unansweredOnly">
+                        미답변만 보기
+                    </label>
+                </div>
+            </div>
+
+
+            <!-- 정렬/사이즈 옵션 -->
+            <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap mt-3">
+                <div class="d-flex align-items-center gap-2">
+                    <label for="size" class="mb-0">
+                        <select id="size" name="size" class="form-select"
+                                onchange="$('#searchForm').submit()">
+                            <option value="10" th:selected="${qnaPageResult.size}==10">10</option>
+                            <option value="20" th:selected="${qnaPageResult.size}==20">20</option>
+                            <option value="30" th:selected="${qnaPageResult.size}==30">30</option>
+                            <option value="40" th:selected="${qnaPageResult.size}==40">40</option>
+                            <option value="50" th:selected="${qnaPageResult.size}==50">50</option>
+                        </select>
+                    </label>
+                    <span>개씩 보기</span>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold">정렬</span>
+                    <label for="sortBy" class="mb-0">
+                        <select id="sortBy" name="sortBy" class="form-select"
+                                onchange="$('#searchForm').submit()">
+                            <option value="CREATE_DATE" th:selected="${searchCondition.sortBy.name() == 'CREATE_DATE'}">
+                                등록일시
+                            </option>
+                            <option value="SUBJECT" th:selected="${searchCondition.sortBy.name() == 'SUBJECT'}">제목
+                            </option>
+                            <option value="VIEW_COUNT" th:selected="${searchCondition.sortBy.name() == 'VIEW_COUNT'}">
+                                조회수
+                            </option>
+                        </select>
+                    </label>
+                    <label for="sortDirection" class="mb-0">
+                        <select id="sortDirection" name="sortDirection" class="form-select"
+                                onchange="$('#searchForm').submit()">
+                            <option value="DESC" th:selected="${searchCondition.sortDirection.name() == 'DESC'}">내림차순
+                            </option>
+                            <option value="ASC" th:selected="${searchCondition.sortDirection.name() == 'ASC'}">오름차순
+                            </option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+        </form>
+
+        <!-- 게시글 테이블 -->
+        <table class="table table-bordered table-hover text-center table-fixed"
+               style="table-layout: fixed; width: 100%;">
+            <thead class="table-light">
+            <tr>
+                <th style="width: 50px;">번호</th>
+                <th>제목</th>
+                <th style="width: 100px;">조회수</th>
+                <th style="width: 200px;">등록 일시</th>
+                <th style="width: 100px;">작성자</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="qna : ${qnaPageResult.qnaList}">
+                <td th:text="${qna.id}"></td>
+                <td class="text-start">
+                    <div class="d-inline-block text-truncate align-middle" style="max-width: 100%;">
+                        <a href="javascript:void(0);"
+                           th:onclick="|location.href = withQueryString('/qna/modify/${qna.id}')|"
+                           th:text="${qna.subject}"
+                           style="max-width: 500px;"
+                           class="text-truncate d-inline-block align-middle"
+                           th:title="${qna.subject}">
+                        </a>
+                        <span th:text="${qna.hasAnswer ? '(답변완료)' : '(미답변)'}"
+                              th:classappend="${!qna.hasAnswer} ? 'text-danger fw-bold'"
+                              class="ms-1 align-middle"></span>
+
+                        <img th:if="${qna.secret}" th:src="@{/image/lock.png}" width="15px" class="ms-1 align-middle"/>
+                    </div>
+                </td>
+                <td th:text="${qna.viewCount}"></td>
+                <td th:text="${#temporals.format(qna.questionAt, 'yyyy-MM-dd HH:mm')}"></td>
+                <td th:text="${qna.writerName}"></td>
+            </tr>
+
+            <!-- 게시글 없는 경우 -->
+            <tr th:if="${#lists.isEmpty(qnaPageResult.qnaList)}">
+                <td colspan="5">게시글이 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- 페이지네이션 -->
+        <nav class="d-flex justify-content-center mt-4"
+             th:with="
+         groupSize=${qnaPageResult.size},
+         currentPage=${qnaPageResult.page ?: 1},
+         total=${qnaPageResult.totalPages ?: 1},
+         startPage=${((qnaPageResult.page ?: 1) - 1) / groupSize * groupSize + 1},
+         endPage=${T(java.lang.Math).min(startPage + groupSize - 1, total)}">
+            <ul class="pagination">
+
+                <!-- 처음 페이지 -->
+                <li class="page-item" th:if="${currentPage > 1}">
+                    <a class="page-link" th:href="@{'/qna/list' + ${queryString} + '&page=1'}">«</a>
+                </li>
+
+                <!-- 이전 그룹 -->
+                <li class="page-item" th:if="${startPage > 1}">
+                    <a class="page-link"
+                       th:href="@{'/qna/list' + ${queryString} + '&page=' + (${startPage - 1})}">&lt;</a>
+                </li>
+
+                <!-- 페이지 번호 -->
+                <li class="page-item"
+                    th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                    th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link"
+                       th:href="@{'/qna/list' + ${queryString} + '&page=' + ${i}}"
+                       th:text="${i}">1</a>
+                </li>
+
+                <!-- 다음 그룹 -->
+                <li class="page-item" th:if="${endPage < total}">
+                    <a class="page-link"
+                       th:href="@{'/qna/list' + ${queryString} + '&page=' + (${endPage + 1})}">&gt;</a>
+                </li>
+
+                <!-- 마지막 페이지 -->
+                <li class="page-item" th:if="${currentPage < total}">
+                    <a class="page-link" th:href="@{'/qna/list' + ${queryString} + '&page=' + ${total}}">»</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+</html>
