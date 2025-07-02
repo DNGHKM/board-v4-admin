@@ -3,7 +3,6 @@ package com.boardv4admin.controller;
 import com.boardv4admin.dto.auth.LoginRequest;
 import com.boardv4admin.service.AuthService;
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

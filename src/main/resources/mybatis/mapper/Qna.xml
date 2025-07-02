@@ -7,14 +7,11 @@
         WHERE id = #{qnaId}
     </select>
 
-<!--        private Long answererId;
-    private String answer;
-    private LocalDateTime answerAt;-->
     <update id="updateAnswer" parameterType="Qna">
         UPDATE qna
-        SET answerer_id  = #{answererId},
-            answer = #{answer},
-            answer_at = #{answerAt}
+        SET answerer_id = #{answererId},
+            answer      = #{answer},
+            answer_at   = #{answerAt}
         WHERE id = #{id}
     </update>
 

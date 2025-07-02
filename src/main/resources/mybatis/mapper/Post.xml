@@ -25,7 +25,7 @@
     <select id="countBySearch" resultType="Integer">
         SELECT COUNT(*)
         FROM post p
-            JOIN category c ON p.category_id = c.id
+        JOIN category c ON p.category_id = c.id
         WHERE p.board_id = #{boardId}
 
         <if test="categoryId != null and categoryId != ''">
@@ -123,44 +123,37 @@
         LIMIT #{dto.size} OFFSET #{offset}
     </select>
     <select id="findPinnedTop5" resultType="com.boardv4admin.dto.post.PostSummaryResponse">
-        SELECT
-        p.id,
-        c.name AS categoryName,
-        p.subject,
-        m.name AS writerName,
-        p.pinned as pinned,
+        SELECT p.id,
+               c.name                    AS categoryName,
+               p.subject,
+               m.name                    AS writerName,
+               p.pinned                  as pinned,
 
-        -- 썸네일 파일명 (예: 대표 첨부파일 1개만)
-        (
-        SELECT pf.saved_filename
-        FROM post_file pf
-        WHERE pf.post_id = p.id
-        ORDER BY pf.id ASC
-        LIMIT 1
-        ) AS thumbnailFilename,
+               -- 썸네일 파일명 (예: 대표 첨부파일 1개만)
+               (SELECT pf.saved_filename
+                FROM post_file pf
+                WHERE pf.post_id = p.id
+                ORDER BY pf.id ASC
+                LIMIT 1)                 AS thumbnailFilename,
 
-        -- 댓글 수
-        (
-        SELECT COUNT(*)
-        FROM comment
-        WHERE post_id = p.id
-        ) AS commentCount,
+               -- 댓글 수
+               (SELECT COUNT(*)
+                FROM comment
+                WHERE post_id = p.id)    AS commentCount,
 
-        -- 첨부파일 수
-        (
-        SELECT COUNT(*)
-        FROM post_file pf
-        WHERE pf.post_id = p.id
-        ) AS fileCount,
+               -- 첨부파일 수
+               (SELECT COUNT(*)
+                FROM post_file pf
+                WHERE pf.post_id = p.id) AS fileCount,
 
-        p.view_count AS viewCount,
-        p.create_at AS createAt
+               p.view_count              AS viewCount,
+               p.create_at               AS createAt
 
         FROM post p
-        JOIN category c ON p.category_id = c.id
-        JOIN member m ON p.member_id = m.id
+                 JOIN category c ON p.category_id = c.id
+                 JOIN member m ON p.member_id = m.id
         WHERE p.board_id = #{boardId}
-            AND p.pinned = true
+          AND p.pinned = true
 
         ORDER BY p.id DESC
         LIMIT 5
@@ -169,9 +162,9 @@
 
     <update id="softDelete">
         UPDATE post
-        SET subject   = #{deletedSubject},
-            content   = #{deletedContent},
-            deleted   = true
+        SET subject = #{deletedSubject},
+            content = #{deletedContent},
+            deleted = true
         WHERE id = #{postId}
     </update>
 

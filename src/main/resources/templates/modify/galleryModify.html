@@ -61,7 +61,8 @@
                     <td>
                         <div th:each="file : ${post.files}" class="mb-2 file-preserve-row"> <!-- ← 여기 추가 -->
                             <input type="hidden" name="preserveFilenames" th:value="${file.savedFilename}"/>
-                            <img th:src="@{/api/v1/files/{filename}(filename=${file.savedFilename})}" width="50px" class="me-2">
+                            <img th:src="@{/api/v1/files/{filename}(filename=${file.savedFilename})}" width="50px"
+                                 class="me-2">
                             <a th:href="@{/api/v1/files/{filename}(filename=${file.savedFilename})}"
                                th:text="${file.originalFilename}" target="_blank"
                                class="me-2 text-truncate d-inline-block" style="max-width: 400px;"></a>

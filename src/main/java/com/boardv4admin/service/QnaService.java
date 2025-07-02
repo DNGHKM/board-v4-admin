@@ -6,7 +6,6 @@ import com.boardv4admin.dto.qna.*;
 import com.boardv4admin.exception.qna.QnaNotFoundException;
 import com.boardv4admin.mapper.QnaMapper;
 import com.boardv4admin.repository.QnaRepository;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

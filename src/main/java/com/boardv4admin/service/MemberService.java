@@ -1,7 +1,6 @@
 package com.boardv4admin.service;
 
 import com.boardv4admin.domain.Member;
-import com.boardv4admin.exception.base.FieldValidationException;
 import com.boardv4admin.exception.member.MemberNotFoundException;
 import com.boardv4admin.repository.MemberRepository;
 import lombok.AllArgsConstructor;

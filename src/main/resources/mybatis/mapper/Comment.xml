@@ -12,10 +12,12 @@
         WHERE id = #{commentId}
     </delete>
 
-    <select id="findResponseListByPostId" parameterType="Long" resultType="com.boardv4admin.dto.comment.CommentResponse">
+    <select id="findResponseListByPostId" parameterType="Long"
+            resultType="com.boardv4admin.dto.comment.CommentResponse">
         SELECT c.id, m.username, m.name, c.content, c.create_at
-        FROM comment c JOIN member m
-            ON c.member_id = m.id
+        FROM comment c
+                 JOIN member m
+                      ON c.member_id = m.id
         WHERE post_id = #{postId}
         order by create_at;
     </select>

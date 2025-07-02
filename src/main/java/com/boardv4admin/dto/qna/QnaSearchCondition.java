@@ -44,7 +44,7 @@ public class QnaSearchCondition {
         this.page = Math.max(1, Math.min(this.page, totalPages));
     }
 
-    public String getQueryString(){
+    public String getQueryString() {
         return UriComponentsBuilder.fromPath("")
                 .queryParam("size", this.size)
                 .queryParam("startDate", this.startDate)
